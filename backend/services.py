@@ -45,10 +45,10 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # TF-IDF scores below this → too weak to seed the LLM; use LLM-only fallback
-LOW_CONFIDENCE_THRESHOLD = 0.10
+LOW_CONFIDENCE_THRESHOLD = 0.20
 
 # TF-IDF scores above this → good enough to skip the LLM entirely and return fast
-HIGH_CONFIDENCE_THRESHOLD = 0.95
+HIGH_CONFIDENCE_THRESHOLD = 0.70
 
 SCORE_MIN, SCORE_MAX = 0, 100
 
@@ -409,6 +409,58 @@ def _classify_performance(score: int) -> Tuple[str, str]:
     )
 
 
+def _sanity_check_score(
+    raw_score:       float,
+    study_hours:     float,
+    attendance_loss: float,
+    prev_score1:     float,
+    prev_score2:     float,
+) -> int:
+    """
+    Catches unrealistic ML outputs and corrects them.
+
+    Models trained on synthetic data sometimes produce scores far outside
+    the realistic range (e.g. 20/100 for a student studying 5h/day with
+    65-70% previous scores). This function detects and overrides those cases.
+
+    Reference formula:
+      avg_prev  = (prev_score1 + prev_score2) / 2
+      study_b   = min(study_hours * 4.0, 30)
+      attend_p  = min(attendance_loss * 1.2, 18)
+      formula   = (avg_prev * 0.55) + study_b + 18 - attend_p
+
+    Correction tiers:
+      deviation > 40  -> ignore ML, use formula directly
+      deviation > 20  -> blend 80% formula + 20% ML
+      otherwise       -> trust ML as-is
+    """
+    avg_prev  = (prev_score1 + prev_score2) / 2.0
+    study_b   = min(study_hours * 4.0, 30.0)
+    attend_p  = min(attendance_loss * 1.2, 18.0)
+    formula   = (avg_prev * 0.55) + study_b + 18.0 - attend_p
+    formula   = max(20.0, min(98.0, formula))
+
+    clamped   = max(float(SCORE_MIN), min(float(SCORE_MAX), raw_score))
+    deviation = abs(clamped - formula)
+
+    if deviation > 40:
+        result = formula
+        logger.warning(
+            "Sanity EXTREME: raw=%.1f formula=%.1f dev=%.1f -> using formula",
+            clamped, formula, deviation,
+        )
+    elif deviation > 20:
+        result = (formula * 0.80) + (clamped * 0.20)
+        logger.warning(
+            "Sanity BLEND: raw=%.1f formula=%.1f dev=%.1f -> blended=%.1f",
+            clamped, formula, deviation, result,
+        )
+    else:
+        result = clamped
+
+    return max(SCORE_MIN, min(SCORE_MAX, int(round(result))))
+
+
 def predict_score(
     study_hours:     float,
     attendance_loss: float,
@@ -417,37 +469,53 @@ def predict_score(
     predictor,
 ) -> PredictResponse:
     """
-    Predict exam score → classify performance → optionally add Ollama study advice.
+    Predict exam score with sanity-correction, performance classification,
+    and optional Ollama study advice.
 
     Feature order matches model training exactly:
       [study_hours, attendance_loss, prev_score1, prev_score2]
+
+    Sanity layer
+    ────────────
+    Local regression models trained on synthetic data sometimes produce
+    scores that contradict the input (e.g. 20/100 for a student studying
+    5h/day with 65-70% previous scores).  _sanity_check_score() detects
+    these deviations (> 30 points from a weighted formula) and blends
+    the ML result with the formula to produce a realistic output.
     """
     try:
-        # ── ML prediction ─────────────────────────────────────────────────────
-        features        = np.array(
+        # ── Step 1: ML prediction ──────────────────────────────────────────────
+        features  = np.array(
             [[study_hours, attendance_loss, prev_score1, prev_score2]],
             dtype=np.float64,
         )
-        raw_score       = float(predictor.predict(features)[0])
-        predicted_score = max(SCORE_MIN, min(SCORE_MAX, int(round(raw_score))))
+        raw_score = float(predictor.predict(features)[0])
+
+        # ── Step 2: Sanity-correct if needed ──────────────────────────────────
+        predicted_score = _sanity_check_score(
+            raw_score, study_hours, attendance_loss, prev_score1, prev_score2
+        )
+
+        # ── Step 3: Classify performance ──────────────────────────────────────
         performance, message = _classify_performance(predicted_score)
 
         logger.info(
-            "Predict: [%.1f, %.1f, %.1f, %.1f] → raw=%.2f  clamped=%d  band=%s",
+            "Predict: study=%.1f  missed=%.1f  p1=%.1f  p2=%.1f  "
+            "raw=%.1f  final=%d  band=%s",
             study_hours, attendance_loss, prev_score1, prev_score2,
             raw_score, predicted_score, performance,
         )
 
-        # ── Optional Ollama study advice ──────────────────────────────────────
+        # ── Step 4: Optional Ollama study advice ───────────────────────────────
         study_advice: str | None = None
         if ollama_available():
-            prompt = build_score_advice_prompt(
+            prompt      = build_score_advice_prompt(
                 predicted_score, performance, study_hours, attendance_loss,
             )
             advice_text = ollama_ask(prompt, retry_if_short=False)
             if advice_text:
                 study_advice = advice_text.strip()
-                logger.info("Ollama provided personalised study advice.")
+                logger.info("Ollama study advice generated.")
 
         return PredictResponse(
             predicted_score=predicted_score,
@@ -460,7 +528,10 @@ def predict_score(
         raise
     except Exception as exc:
         logger.exception("Unexpected error in predict_score: %s", exc)
-        raise HTTPException(status_code=500, detail=f"Score prediction failed: {exc}") from exc
+        raise HTTPException(
+            status_code=500,
+            detail=f"Score prediction failed: {exc}",
+        ) from exc
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

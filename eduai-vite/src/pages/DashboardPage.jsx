@@ -39,7 +39,7 @@ export default function DashboardPage() {
             Welcome back, Alex!
           </h1>
           <p style={{ fontSize: 14, color: '#6b7280', maxWidth: 420, margin: 0 }}>
-            Your AI tutor has prepared new insights for your Computer Science curriculum today.
+            Your Tutor has prepared new insights for you today!
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
@@ -85,7 +85,7 @@ export default function DashboardPage() {
               <TrendingUpIcon sx={{ fontSize: 16 }} /> 94% Confidence
             </div>
             <p style={{ fontSize: 13, fontStyle: 'italic', color: '#bfdbfe', lineHeight: 1.6, margin: 0 }}>
-              "Based on your current study habits and consistent quiz performance."
+              Based on your current study habits and consistent quiz performance.
             </p>
           </div>
         </div>
@@ -159,8 +159,8 @@ export default function DashboardPage() {
       <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1f2937', margin: '0 0 16px' }}>Quick Actions</h2>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {[
-          { label: 'Start a Quiz',   desc: 'Challenge yourself with personalized AI-generated questions.', icon: <FlashOnIcon sx={{ color: '#6c47ff', fontSize: 22 }} />, to: '/quiz' },
-          { label: 'Ask a Question', desc: 'Get immediate, context-aware answers from your AI curator.',  icon: <PsychologyIcon sx={{ color: '#6c47ff', fontSize: 22 }} />, to: '/chat' },
+          { label: 'Start a Quiz',   desc: 'Challenge yourself with personalized questions.', icon: <FlashOnIcon sx={{ color: '#6c47ff', fontSize: 22 }} />, to: '/quiz' },
+          { label: 'Ask a Question', desc: 'Get immediate, context-aware answers from your curator.',  icon: <PsychologyIcon sx={{ color: '#6c47ff', fontSize: 22 }} />, to: '/chat' },
         ].map(a => (
           <button
             key={a.label}

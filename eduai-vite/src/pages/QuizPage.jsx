@@ -316,9 +316,7 @@ function GeneratingScreen({ topic, difficulty }) {
       <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1f2937', marginBottom: 8 }}>
         Generating Your Quiz…
       </h2>
-      <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 24 }}>
-        Claude AI is crafting <strong>{difficulty}</strong> questions on <strong>{topic}</strong>
-      </p>
+      
       <MuiCircularProgress sx={{ color: '#6c47ff' }} />
       <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 16 }}>
         This takes a few seconds…
@@ -408,21 +406,16 @@ export default function QuizPage() {
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <h1 style={{ fontSize: 32, fontWeight: 800, color: '#1f2937', margin: 0 }}>Quiz Generator</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: 'linear-gradient(135deg,#ede9ff,#f5f3ff)', borderRadius: 99, border: '1px solid #c4b5fd' }}>
-            <AutoAwesomeIcon sx={{ fontSize: 14, color: '#6c47ff' }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#6c47ff' }}>AI-Powered</span>
-          </div>
+         
         </div>
-        <p style={{ fontSize: 14, color: '#6b7280', margin: '8px 0 0' }}>
-          Claude AI generates fresh, unique questions every time you start a quiz.
-        </p>
+        
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
         {/* Setup card */}
         <div style={{ ...card, padding: 26 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1f2937', margin: '0 0 4px' }}>Setup Parameters</h2>
-          <p style={{ fontSize: 12, color: '#9ca3af', margin: '0 0 22px' }}>Configure your AI-powered assessment</p>
+         
 
           {/* Topic */}
           <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#6b7280', display: 'block', marginBottom: 8 }}>
@@ -474,30 +467,8 @@ export default function QuizPage() {
           </button>
         </div>
 
-        {/* Info card */}
-        <div style={{ background: 'linear-gradient(145deg,#0f1729,#1e2d55)', borderRadius: 20, padding: 26, color: '#fff', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-            <AutoAwesomeIcon sx={{ fontSize: 20, color: '#a78bfa' }} />
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#93c5fd' }}>AI-Powered Quiz</span>
-          </div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 12, color: '#fff' }}>Fresh Questions<br />Every Time</h2>
-          <p style={{ fontSize: 13, color: '#bfdbfe', lineHeight: 1.7, marginBottom: 24 }}>
-            Claude AI generates completely unique questions tailored to your selected topic and difficulty. No repetition, real explanations, and a Socratic hint system.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 'auto' }}>
-            {[
-              { icon: '✦', text: `${count} ${diff} questions on ${topic}` },
-              { icon: '💡', text: 'Hints available without spoiling answers' },
-              { icon: '📋', text: 'Full explanations after each question' },
-              { icon: '📊', text: 'Detailed review with grade at the end' },
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#93c5fd' }}>
-                <span style={{ fontSize: 14 }}>{item.icon}</span>
-                <span>{item.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+       
+       
       </div>
 
       {/* Recent results */}
